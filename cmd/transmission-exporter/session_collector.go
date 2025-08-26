@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/metalmatze/transmission-exporter"
 	"github.com/prometheus/client_golang/prometheus"
@@ -10,6 +10,7 @@ import (
 // SessionCollector exposes session metrics
 type SessionCollector struct {
 	client *transmission.Client
+	log    *slog.Logger
 
 	AltSpeedDown     *prometheus.Desc
 	AltSpeedUp       *prometheus.Desc
@@ -26,9 +27,10 @@ type SessionCollector struct {
 }
 
 // NewSessionCollector takes a transmission.Client and returns a SessionCollector
-func NewSessionCollector(client *transmission.Client) *SessionCollector {
+func NewSessionCollector(client *transmission.Client, log *slog.Logger) *SessionCollector {
 	return &SessionCollector{
 		client: client,
+		log:    log,
 
 		AltSpeedDown: prometheus.NewDesc(
 			namespace+"alt_speed_down",
@@ -125,7 +127,7 @@ func (sc *SessionCollector) Describe(ch chan<- *prometheus.Desc) {
 func (sc *SessionCollector) Collect(ch chan<- prometheus.Metric) {
 	session, err := sc.client.GetSession()
 	if err != nil {
-		log.Printf("failed to get session: %v", err)
+		sc.log.Error("failed to get session", "error", err)
 		return
 	}
 

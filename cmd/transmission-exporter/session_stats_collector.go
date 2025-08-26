@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/metalmatze/transmission-exporter"
@@ -11,6 +11,7 @@ import (
 // SessionStatsCollector exposes SessionStats as metrics
 type SessionStatsCollector struct {
 	client *transmission.Client
+	log    *slog.Logger
 
 	DownloadSpeed  *prometheus.Desc
 	UploadSpeed    *prometheus.Desc
@@ -26,11 +27,12 @@ type SessionStatsCollector struct {
 }
 
 // NewSessionStatsCollector takes a transmission.Client and returns a SessionStatsCollector
-func NewSessionStatsCollector(client *transmission.Client) *SessionStatsCollector {
+func NewSessionStatsCollector(client *transmission.Client, log *slog.Logger) *SessionStatsCollector {
 	const collectorNamespace = "session_stats_"
 
 	return &SessionStatsCollector{
 		client: client,
+		log:    log,
 
 		DownloadSpeed: prometheus.NewDesc(
 			namespace+collectorNamespace+"download_speed_bytes",
@@ -109,7 +111,7 @@ func (sc *SessionStatsCollector) Describe(ch chan<- *prometheus.Desc) {
 func (sc *SessionStatsCollector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := sc.client.GetSessionStats()
 	if err != nil {
-		log.Printf("failed to get session stats: %v", err)
+		sc.log.Error("failed to get session stats", "error", err)
 		return
 	}
 

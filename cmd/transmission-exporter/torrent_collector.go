@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"strconv"
 
 	transmission "github.com/metalmatze/transmission-exporter"
@@ -15,6 +15,7 @@ const (
 // TorrentCollector has a transmission.Client to create torrent metrics
 type TorrentCollector struct {
 	client *transmission.Client
+	log    *slog.Logger
 
 	Status             *prometheus.Desc
 	Added              *prometheus.Desc
@@ -36,11 +37,12 @@ type TorrentCollector struct {
 }
 
 // NewTorrentCollector creates a new torrent collector with the transmission.Client
-func NewTorrentCollector(client *transmission.Client) *TorrentCollector {
+func NewTorrentCollector(client *transmission.Client, log *slog.Logger) *TorrentCollector {
 	const collectorNamespace = "torrent_"
 
 	return &TorrentCollector{
 		client: client,
+		log:    log,
 
 		Status: prometheus.NewDesc(
 			namespace+collectorNamespace+"status",
@@ -160,7 +162,7 @@ func (tc *TorrentCollector) Describe(ch chan<- *prometheus.Desc) {
 func (tc *TorrentCollector) Collect(ch chan<- prometheus.Metric) {
 	torrents, err := tc.client.GetTorrents()
 	if err != nil {
-		log.Printf("failed to get torrents: %v", err)
+		tc.log.Error("failed to get torrents", "error", err)
 		return
 	}
 
