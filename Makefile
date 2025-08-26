@@ -1,5 +1,10 @@
 GO ?= GO111MODULE=on CGO_ENABLED=0 go
 PACKAGES = $(shell go list ./... | grep -v /vendor/)
+VERSION ?= $(shell git describe --tags --abbrev=0)
+REVISION ?= $(shell git rev-parse --short HEAD)
+BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
+BUILD_USER ?= $(shell whoami)@$(shell hostname)
+BUILD_DATE ?= $(shell date -u +"%Y-%m-%d-%H:%M:%S")
 
 .PHONY: all
 all: install
@@ -14,7 +19,13 @@ install:
 
 .PHONY: build
 build:
-	$(GO) build -v ./cmd/transmission-exporter
+	$(GO) build -v -ldflags "\
+        -X main.Version=${VERSION} \
+        -X main.Revision=${REVISION} \
+        -X main.Branch=${BRANCH} \
+        -X main.BuildUser=${BUILD_USER} \
+        -X main.BuildDate=${BUILD_DATE}" \
+        -o transmission-exporter ./cmd/transmission-exporter
 
 .PHONY: fmt
 fmt:

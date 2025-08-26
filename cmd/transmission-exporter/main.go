@@ -14,6 +14,22 @@ import (
 	"github.com/prometheus/exporter-toolkit/web"
 )
 
+var (
+	Version   string
+	Revision  string
+	Branch    string
+	BuildUser string
+	BuildDate string
+)
+
+func init() {
+	version.Version = Version
+	version.Revision = Revision
+	version.Branch = Branch
+	version.BuildUser = BuildUser
+	version.BuildDate = BuildDate
+}
+
 // Config gets its content from env and passes it on to different packages
 type Config struct {
 	TransmissionAddr     string `arg:"env:TRANSMISSION_ADDR"`
