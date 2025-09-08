@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/metalmatze/transmission-exporter"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/theopsguy/transmission-exporter"
 )
 
 // SessionStatsCollector exposes SessionStats as metrics

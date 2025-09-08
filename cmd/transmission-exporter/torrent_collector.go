@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"strconv"
 
-	transmission "github.com/metalmatze/transmission-exporter"
 	"github.com/prometheus/client_golang/prometheus"
+	transmission "github.com/theopsguy/transmission-exporter"
 )
 
 const (
