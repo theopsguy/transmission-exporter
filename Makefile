@@ -1,48 +1,75 @@
-GO ?= GO111MODULE=on CGO_ENABLED=0 go
-PACKAGES = $(shell go list ./... | grep -v /vendor/)
-VERSION ?= $(shell git describe --tags --abbrev=0)
-REVISION ?= $(shell git rev-parse --short HEAD)
-BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
-BUILD_USER ?= $(shell whoami)@$(shell hostname)
-BUILD_DATE ?= $(shell date -u +"%Y-%m-%d-%H:%M:%S")
+.PHONY: all build clean dashboards fmt install lint vet
 
-.PHONY: all
+PROJECTNAME ?= transmission-exporter
+
+GO ?= GO111MODULE=on CGO_ENABLED=0 go
+GOHOSTOS ?= $(shell $(GO) env GOHOSTOS)
+GOHOSTARCH ?= $(shell $(GO) env GOHOSTARCH)
+GO_BUILD_PLATFORM ?= $(GOHOSTOS)-$(GOHOSTARCH)
+FIRST_GOPATH := $(firstword $(subst :, ,$(shell $(GO) env GOPATH)))
+PREFIX ?= $(shell pwd)
+BIN_DIR ?= $(shell pwd)
+
+PACKAGES = $(shell go list ./... | grep -v /vendor/)
+
+PROMU_VERSION ?= 0.17.0
+PROMU_URL := https://github.com/prometheus/promu/releases/download/v$(PROMU_VERSION)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM).tar.gz
+PROMU := $(FIRST_GOPATH)/bin/promu
+
 all: install
 
-.PHONY: clean
-clean:
-	$(GO) clean -i ./...
-
-.PHONY: install
 install:
 	$(GO) install -v ./cmd/transmission-exporter
 
-.PHONY: build
-build:
-	$(GO) build -v -ldflags "\
-        -X main.Version=${VERSION} \
-        -X main.Revision=${REVISION} \
-        -X main.Branch=${BRANCH} \
-        -X main.BuildUser=${BUILD_USER} \
-        -X main.BuildDate=${BUILD_DATE}" \
-        -o transmission-exporter ./cmd/transmission-exporter
-
-.PHONY: fmt
 fmt:
 	$(GO) fmt $(PACKAGES)
 
-.PHONY: vet
 vet:
 	$(GO) vet $(PACKAGES)
 
-.PHONY: lint
 lint:
 	@which golint > /dev/null; if [ $$? -ne 0 ]; then \
 		$(GO) get -u golang.org/x/lint/golint; \
 	fi
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
 
-.PHONY: dashboards
+build: promu
+	$(PROMU) build --prefix $(PREFIX)
+
+promu-crossbuild: promu
+	$(PROMU) crossbuild
+
+promu-crossbuild-tarballs: promu-crossbuild
+	$(PROMU) crossbuild tarballs
+
+release: promu-crossbuild-tarballs
+	$(PROMU) release .tarballs
+
+clean:
+	@echo "Cleaning build artifacts..."
+	$(GO) clean -i ./...
+	rm -rf .build/
+	rm -rf .tarballs/
+	rm -f $(PROJECTNAME)
+	rm -f $(PROJECTNAME)-*.tar.gz
+
+promu:
+	@if [ ! -f $(PROMU) ]; then \
+		echo "Downloading promu..."; \
+		PROMU_TMP=$$(mktemp -d); \
+		if curl -fsSL $(PROMU_URL) | tar -xz -C "$$PROMU_TMP"; then \
+			mkdir -p "$(FIRST_GOPATH)/bin"; \
+			cp "$$PROMU_TMP/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM)/promu" "$(FIRST_GOPATH)/bin/promu"; \
+			chmod +x "$(PROMU)"; \
+			rm -r "$$PROMU_TMP"; \
+			echo "promu downloaded to $(FIRST_GOPATH)/bin/promu"; \
+		else \
+			echo "Failed to download promu"; \
+			rm -r "$$PROMU_TMP"; \
+			exit 1; \
+		fi; \
+	fi
+
 dashboards:
 	jsonnet fmt -i dashboards/transmission.jsonnet
 	jsonnet -J dashboards/vendor -m dashboards -e "(import 'dashboards/transmission.jsonnet').grafanaDashboards"

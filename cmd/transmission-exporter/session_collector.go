@@ -3,8 +3,8 @@ package main
 import (
 	"log/slog"
 
-	"github.com/metalmatze/transmission-exporter"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/theopsguy/transmission-exporter"
 )
 
 // SessionCollector exposes session metrics

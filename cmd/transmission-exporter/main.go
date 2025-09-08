@@ -7,28 +7,12 @@ import (
 
 	arg "github.com/alexflint/go-arg"
 	"github.com/joho/godotenv"
-	transmission "github.com/metalmatze/transmission-exporter"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
+	transmission "github.com/theopsguy/transmission-exporter"
 )
-
-var (
-	Version   string
-	Revision  string
-	Branch    string
-	BuildUser string
-	BuildDate string
-)
-
-func init() {
-	version.Version = Version
-	version.Revision = Revision
-	version.Branch = Branch
-	version.BuildUser = BuildUser
-	version.BuildDate = BuildDate
-}
 
 // Config gets its content from env and passes it on to different packages
 type Config struct {
