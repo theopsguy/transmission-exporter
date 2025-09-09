@@ -16,22 +16,19 @@ PROMU_VERSION ?= 0.17.0
 PROMU_URL := https://github.com/prometheus/promu/releases/download/v$(PROMU_VERSION)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM).tar.gz
 PROMU := $(FIRST_GOPATH)/bin/promu
 
+GOLANGCI_LINT_OPTS ?=
+GOLANGCI_LINT_VERSION ?= v2.4.0
+GOLANGCI_LINT_URL := https://raw.githubusercontent.com/golangci/golangci-lint/$(GOLANGCI_LINT_VERSION)/install.sh
+GOLANGCI_LINT := $(FIRST_GOPATH)/bin/golangci-lint
+
 all: install
 
 install:
 	$(GO) install -v ./cmd/transmission-exporter
 
-fmt:
-	$(GO) fmt $(PACKAGES)
-
-vet:
-	$(GO) vet $(PACKAGES)
-
-lint:
-	@which golint > /dev/null; if [ $$? -ne 0 ]; then \
-		$(GO) get -u golang.org/x/lint/golint; \
-	fi
-	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
+lint: golangci-lint
+	@echo "Running golangci-lint..."
+	$(GOLANGCI_LINT) run --timeout=5m
 
 build: promu
 	$(PROMU) build --prefix $(PREFIX)
@@ -67,6 +64,20 @@ promu:
 			echo "Failed to download promu"; \
 			rm -r "$$PROMU_TMP"; \
 			exit 1; \
+		fi; \
+	fi
+
+golangci-lint:
+	@if [ ! -f $(GOLANGCI_LINT) ]; then \
+		echo "Downloading golangci-lint..."; \
+		curl -sfL $(GOLANGCI_LINT_URL) \
+		| sed -e '/install -d/d' \
+		| sh -s -- -b $(FIRST_GOPATH)/bin $(GOLANGCI_LINT_VERSION); \
+		if [ ! -f $(GOLANGCI_LINT) ]; then \
+			echo "Failed to download golangci-lint"; \
+			exit 1; \
+		else \
+			echo "golangci-lint downloaded to $(GOLANGCI_LINT)"; \
 		fi; \
 	fi
 
