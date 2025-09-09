@@ -52,7 +52,10 @@ func (c *Client) post(body []byte) ([]byte, error) {
 	}
 
 	if res.StatusCode == http.StatusConflict {
-		c.getToken()
+		err := c.getToken()
+		if err != nil {
+			return make([]byte, 0), err
+		}
 		authRequest, err := c.authRequest("POST", body)
 		if err != nil {
 			return make([]byte, 0), err
