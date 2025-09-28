@@ -1,6 +1,5 @@
-permissions:
-  contents: read
-name: test
+name: Test
+
 on:
   push:
     branches:
@@ -8,6 +7,10 @@ on:
   pull_request:
     branches:
       - master
+
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint
