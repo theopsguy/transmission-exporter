@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -48,7 +49,7 @@ func (c *Client) post(body []byte) ([]byte, error) {
 	defer res.Body.Close()
 
 	if res.StatusCode == http.StatusUnauthorized {
-		return make([]byte, 0), errors.New("authorization failed, check your username and password and make sure the ip is whitelisted")
+		return make([]byte, 0), errors.New("request failed: authentication error when making RPC call to Transmission")
 	}
 
 	if res.StatusCode == http.StatusConflict {
@@ -88,6 +89,15 @@ func (c *Client) getToken() error {
 		return err
 	}
 	defer res.Body.Close()
+
+	if res.StatusCode == http.StatusUnauthorized {
+		return errors.New("failed to get token: authorization failed, check your username and password")
+	}
+
+	if res.StatusCode != http.StatusConflict {
+		return fmt.Errorf("unexpected response trying to obtain token, status code: %d", res.StatusCode)
+	}
+
 	c.token = res.Header.Get("X-Transmission-Session-Id")
 	return nil
 }
