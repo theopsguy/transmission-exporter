@@ -54,7 +54,7 @@ spec:
         #     mountPath: "/downloads"
         #   - name: config
         #     mountPath: "/config"
-      - image: metalmatze/transmission-exporter
+      - image: theopsguy/transmission-exporter
         name: transmission-exporter
         imagePullPolicy: Always
         resources:

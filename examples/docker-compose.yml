@@ -7,7 +7,7 @@ transmission:
     - "51413:51413/udp"
 
 transmission-exporter:
-  image: metalmatze/transmission-exporter
+  image: theopsguy/transmission-exporter
   restart: always
   links:
     - transmission
