@@ -50,6 +50,11 @@ clean:
 	rm -f $(PROJECTNAME)
 	rm -f $(PROJECTNAME)-*.tar.gz
 
+test:
+	$(GO) test -timeout 5m -json -v ./... | go tool gotestfmt
+
+check: lint test
+
 promu:
 	@if [ ! -f $(PROMU) ]; then \
 		echo "Downloading promu..."; \
