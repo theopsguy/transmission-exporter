@@ -8,6 +8,7 @@ import (
 	arg "github.com/alexflint/go-arg"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus"
+	versioncollector "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
@@ -58,6 +59,7 @@ func main() {
 	prometheus.MustRegister(NewTorrentCollector(client, log))
 	prometheus.MustRegister(NewSessionCollector(client, log))
 	prometheus.MustRegister(NewSessionStatsCollector(client, log))
+	prometheus.MustRegister(versioncollector.NewCollector("transmission_exporter"))
 
 	http.Handle(c.WebPath, promhttp.Handler())
 
